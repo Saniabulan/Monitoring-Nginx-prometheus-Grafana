@@ -31,6 +31,19 @@ services:
       - 9090:9090
 
 # source https://github.com/nginxinc/nginx-prometheus-exporter
+ nginx:
+    image: nginx
+    container_name: nginx-www
+    volumes:
+      - ./nginx/html:/usr/share/nginx/html:rw
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/log:/var/log/nginx
+    ports:
+      - '80:80'
+    restart: always
+
+  # source https://github.com/prometheus/node_exporter  
+  # https://github.com/vegasbrianc/prometheus/
   nginx-prometheus-exporter:
     image: nginx/nginx-prometheus-exporter:1.0
     container_name: prometheus-nginx-exporter
@@ -38,36 +51,11 @@ services:
     env_file:
       .env
     command:
-      - -nginx.scrape-uri=https://nginx/stub_status
-    expose: 
-      - 9113
-    networks:
-      - localhost
-    depends_on:
-      - prometheus
-
-  # source https://github.com/prometheus/node_exporter  
-  # https://github.com/vegasbrianc/prometheus/
-  prometheus-node-exporter:
-    image: prom/node-exporter:v1.7.0
-    container_name: prometheus-node-exporter
-    restart: always
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command: 
-      - '--path.procfs=/host/proc' 
-      - '--path.sysfs=/host/sys'
-      - --collector.filesystem.ignored-mount-points
-      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
-    networks:
-      - localhost
-    privileged: true
-    depends_on:
-      - prometheus
+      - -nginx.scrape-uri=http://nginx/stub_status
     expose:
-      - 9100
+      - 9113
+    depends_on:
+      - prometheus
 
   # source https://grafana.com/docs/grafana/latest/installation/docker/
   grafana:
